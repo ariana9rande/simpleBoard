@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Board</title>
+    <script th:inline="javascript">
+        let message = /*[[${message}]]*/"";
+
+        if (message)
+        {
+            alert(message);
+            message = "";
+        }
+    </script>
+</head>
+<body>
+<div th:replace="navbar.html"></div>
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Board</h1>
+    <table class="table table-bordered table-striped">
+        <thead>
+        <tr align="center">
+            <th>글번호</th>
+            <th>작성자</th>
+            <th>제목</th>
+            <th>작성일</th>
+            <th>조회수</th>
+            <th>추천수</th>
+        </tr>
+        </thead>
+        <tbody th:if="${postList.isEmpty()}">
+        <tr>
+            <td colspan="5">
+                <p class="text-center"><b><span style="font-size: 9pt">등록된 글이 없습니다.</span></b></p>
+            </td>
+        </tr>
+        </tbody>
+        <tbody th:unless="${postList.isEmpty()}">
+        <tr th:each="article : ${postList}" align="center">
+            <td width="10%" th:text="${postList.size() - articleStat.count + 1}"></td>
+            <td width="10%" th:text="${article.postWriter}"></td>
+            <td width="35%">
+                <a th:href="@{/board/view/{id}(id=${article.postId}, articleNo=${postList.size() - articleStat.count + 1})}" th:text="${article.postTitle}"></a>
+            </td>
+            <td width="15%" th:text="${article.postWriteDate}"></td>
+            <td width="10%" th:text="${article.viewCount}"></td>
+            <td width="10%" th:text="${article.likeCount}"></td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="text-center">
+        <a class="btn btn-primary" th:href="@{/board/add}">글쓰기</a>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

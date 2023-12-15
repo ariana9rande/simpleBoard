@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>상세 조회</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #tr_btn_modify {
+            display: none;
+        }
+
+        .comment_btn_modify {
+            display: none;
+        }
+
+        .btn-xs {
+            padding: 2px 6px;
+            font-size: 10px;
+        }
+    </style>
+    <script th:inline="javascript">
+        let message = /*[[${message}]]*/"";
+
+        if (message)
+        {
+            alert(message);
+            message = "";
+        }
+
+        function fn_enable() {
+            document.querySelector('#title').disabled = false;
+            document.querySelector('#content').disabled = false;
+            document.querySelector('#tr_btn').style.display = 'none';
+            document.querySelector('#tr_btn_modify').style.display = 'table-row';
+        }
+
+        function fn_disable() {
+            document.querySelector('#title').disabled = true;
+            document.querySelector('#content').disabled = true;
+            document.querySelector('#tr_btn').style.display = 'table-row';
+            document.querySelector('#tr_btn_modify').style.display = 'none';
+        }
+
+        function fn_modify_article(frm) {
+            frm.action = /*[[@{/board/edit}]]*/ "";
+            frm.submit();
+        }
+
+        function fn_delete_article(frm) {
+            frm.action = /*[[@{/board/remove}]]*/ "";
+            frm.submit();
+        }
+
+        function fn_write_comment() {
+            document.querySelector('#commentForm').style.display = 'table-row';
+        }
+
+        function fn_enable_comment(commentId) {
+            document.querySelector(`#commentContent_${commentId}`).disabled = false;
+
+            document.querySelector(`#comment_btn_${commentId}`).style.display = 'none';
+            document.querySelector(`#comment_btn_modify_${commentId}`).style.display = 'table-row';
+        }
+
+        function fn_delete_comment(commentId) {
+
+            const form = document.createElement("form");
+            form.method = "post";
+            form.action = "/board/remove-comment";
+
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "id";
+            input.value = commentId;
+
+            form.appendChild(input);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function fn_disable_comment(commentId) {
+            document.getElementById(`commentContent_${commentId}`).disabled = true;
+
+            document.getElementById(`comment_btn_${commentId}`).style.display = 'table-row';
+            document.getElementById(`comment_btn_modify_${commentId}`).style.display = 'none';
+        }
+
+        function fn_modify_comment(commentId) {
+            // let val = elm.parentElement.parentElement.previousElementSibling.previousElementSibling.firstElementChild.value
+            const content = document.querySelector(`#commentContent_${commentId}`);
+            content.name = "content";
+
+            const form = document.createElement("form");
+            form.method = "post";
+            form.action = "/board/edit-comment";
+
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "id";
+            input.value = commentId;
+
+            form.appendChild(input);
+            form.appendChild(content);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function fn_like_post(postId) {
+            const form = document.createElement("form");
+            form.method = "post";
+            form.action = "/board/like-post";
+
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "postId";
+            input.value = postId;
+
+            form.appendChild(input);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function fn_like_comment(commentId) {
+            const form = document.createElement("form");
+            form.method = "post";
+            form.action = "/board/like-comment";
+
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "commentId";
+            input.value = commentId;
+
+            form.appendChild(input);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+</head>
+<body>
+<div th:replace="navbar.html"></div>
+<div class="container mt-5">
+    <form name="articleForm" method="post" action="">
+        <table class="table table-bordered">
+            <tbody>
+            <tr>
+                <td align="center">글번호</td>
+                <td>
+                    <input type="text" th:value="${articleNo}" class="form-control" disabled>
+                    <input type="hidden" th:value="${article.postId}" name="id">
+                </td>
+                <td align="center">추천</td>
+                <td width="15%">
+                    <input type="text" th:value="${article.likeCount}" class="form-control" disabled>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">작성자</td>
+                <td colspan="3">
+                    <input type="text" th:value="${article.postWriter}" name="writer" class="form-control" disabled>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">제목</td>
+                <td colspan="3">
+                    <input type="text" th:value="${article.postTitle}" name="title"
+                           id="title" class="form-control" disabled>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">내용</td>
+                <td colspan="3">
+                    <textarea rows="10" name="content"
+                              id="content" class="form-control" style="resize:none"
+                              disabled>[[${article.postContent}]]</textarea>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">작성일</td>
+                <td colspan="3">
+                    <input type="text" th:value="${article.postWriteDate}" class="form-control" disabled>
+                </td>
+            </tr>
+            <tr id="tr_btn">
+                <td colspan="4" align="center">
+                    <input type="button" value="수정" onclick="fn_enable()" class="btn btn-primary"
+                           th:if="${session.loggedInUser != null && (session.loggedInUser.name == article.postWriter)}">
+                    <input type="button" value="삭제" onclick="fn_delete_article(articleForm)" class="btn btn-danger"
+                           th:if="${session.loggedInUser != null && (session.loggedInUser.role == 'admin' ||  session.loggedInUser.name == article.postWriter)}">
+                    <a th:href="@{/board/list}" class="btn btn-secondary">목록보기</a>
+                </td>
+            </tr>
+            <tr id="tr_btn_modify">
+                <td colspan="4" align="center">
+                    <input type="button" value="저장" onclick="fn_modify_article(articleForm)" class="btn btn-primary">
+                    <input type="button" value="취소" onclick="fn_disable()" class="btn btn-secondary">
+                </td>
+            </tr>
+            <tr th:if="${session.loggedInUser != null}">
+                <td colspan="4" align="center">
+                    <input type="button" value="추천" th:onclick="'fn_like_post(' + ${article.postId} + ')'"
+                           class="btn btn-success">
+                    <input type="button" value="댓글 쓰기" onclick="fn_write_comment()"
+                           class="btn btn-primary">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <form th:action="@{/board/add-comment(id=${article.postId})}" method="post" id="commentForm" style="display: none;">
+        <table class="table table-bordered">
+            <tbody>
+            <tr>
+                <td align="center">댓글 내용</td>
+                <td align="center">
+                    <textarea rows="4" name="commentContent" class="form-control" style="resize: none;"></textarea>
+                </td>
+                <td>
+                    <button type="submit" class="btn btn-secondary">작성 완료</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+
+    <table class="table table-bordered">
+        <tbody>
+        <tr align="center">
+            <th>작성자</th>
+            <th>내용</th>
+            <th>작성 날짜</th>
+            <th>추천수</th>
+            <th>관리</th>
+        </tr>
+        <tr th:if="${commentList.isEmpty()}">
+            <td align="center" colspan="4">해당 게시물에는 댓글이 없습니다.</td>
+        </tr>
+        <tr th:unless="${commentList.isEmpty()}" th:each="comment : ${commentList}" align="center">
+            <td width="10%" th:text="${comment.writer}"></td>
+            <td width="35%">
+                    <textarea th:id="'commentContent_' + ${comment.id}"
+                              class="form-control" style="resize:none" disabled>[[${comment.content}]]</textarea>
+            </td>
+            <td width="15%" th:text="${comment.writeDate}"></td>
+            <td width="10%">
+                <input type="text" th:value="${comment.likeCount}" class="form-control" disabled>
+                <input type="button" value="추천" th:onclick="'fn_like_comment(' + ${comment.id} + ')'"
+                       class="btn btn-success btn-xs"
+                       th:if="${session.loggedInUser != null}">
+            </td>
+            <td align="center" width="10%">
+                <div th:id="'comment_btn_' + ${comment.id}">
+                    <input type="button" value="수정" th:onclick="'fn_enable_comment(' + ${comment.id} + ')'"
+                           class="btn btn-primary btn-xs"
+                           th:if="${session.loggedInUser != null && (session.loggedInUser.name == comment.writer)}">
+
+                    <input type="button" value="삭제" th:onclick="'fn_delete_comment(' + ${comment.id} + ')'"
+                           class="btn btn-danger btn-xs"
+                           th:if="${session.loggedInUser != null && (session.loggedInUser.role == 'admin' ||  session.loggedInUser.name == comment.writer)}">
+                </div>
+                <div th:id="'comment_btn_modify_' + ${comment.id}" class="comment_btn_modify">
+
+                    <input type="button" value="저장" class="btn btn-primary btn-xs"
+                           th:onclick="'fn_modify_comment(' + ${comment.id} + ')'">
+                    <input type="button" value="취소" th:onclick="'fn_disable_comment(' + ${comment.id} + ')'"
+                           class="btn btn-secondary btn-xs">
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
